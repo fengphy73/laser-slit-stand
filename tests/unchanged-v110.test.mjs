@@ -1,3 +1,4 @@
+// v1.2.0 起預設筆徑/筆長改變，基準檔已明確寫入 v1.1 的筆參數（14／140）。
 // v1.1.1 只改屏幕架「紙張方向」預設值：三件 STL 在相同參數下須與 v1.1.0 逐位元相同（直放、橫放各一輪）
 import Module from 'manifold-3d'; import {createHash} from 'node:crypto'; import {readFileSync} from 'node:fs';
 import {buildAll, binarySTL, sanitize, DEFAULTS} from '../src/geometry.mjs';
@@ -15,7 +16,7 @@ ok(DEFAULTS.paperOrientation === 'landscape', '預設紙張方向為橫放');
 ok(sanitize({}).params.paperOrientation === 'landscape', '未指定時為橫放');
 ok(sanitize({paperOrientation: 'abc'}).params.paperOrientation === 'landscape' && sanitize({paperOrientation: undefined}).params.paperOrientation === 'landscape', '不合法或空值會回到預設橫放');
 ok(sanitize({paperOrientation: 'portrait'}).params.paperOrientation === 'portrait', '直放選項保留');
-const land = ref.find(e => Object.keys(e.params).length === 1 && e.params.paperOrientation === 'landscape');
+const land = ref.find(e => Object.keys(e.params).length === 3 && e.params.paperOrientation === 'landscape'); // 只有方向＋v1.1 筆參數的那組
 const def = buildAll(M, {});
 ok(h(binarySTL(def.parts.screen.print)) === land.screen && def.parts.screen.size.join() === '80,240,25', `預設屏幕架＝v1.1.0 橫放，包圍盒 ${def.parts.screen.size.join(' × ')} mm`);
 if (fail) { console.log(`${fail} 項失敗`); process.exit(1); } else console.log('全部通過');
