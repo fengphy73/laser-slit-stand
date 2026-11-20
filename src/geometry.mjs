@@ -1,13 +1,13 @@
 // 雷射光架設計器：幾何核心（瀏覽器與 Node 共用）
 // 座標：X = 光行進方向，Y = 左右，Z = 向上；單位 mm。
-export const VERSION = '1.1.1';
+export const VERSION = '1.2.0';
 
 export const DEFAULTS = {
   axisHeight: 60,      // 光軸離桌面高度
   fit: 0.35,           // 共用配合間隙
   // 雷射夾座
-  penDiameter: 14,
-  penLength: 140,      // 用來確認筆尾露出底座後方
+  penDiameter: 21,     // v1.2.0：執行長實測筆徑 21 mm
+  penLength: 114,      // v1.2.0：執行長實測筆長 114 mm；用來確認筆尾露出底座後方
   vAngle: 90,          // V 槽夾角（度）
   cradleSpacing: 70,   // 前後托架中心距
   cradleThickness: 8,  // 托架沿筆方向的厚度
@@ -30,7 +30,7 @@ export const DEFAULTS = {
 
 export const LIMITS = {
   axisHeight: [35, 120], fit: [0.1, 0.8],
-  penDiameter: [10, 18], penLength: [60, 250], vAngle: [60, 120], cradleSpacing: [20, 200], cradleThickness: [4, 20],
+  penDiameter: [10, 30], penLength: [60, 250], vAngle: [60, 120], cradleSpacing: [20, 200], cradleThickness: [4, 20],
   stopThickness: [2, 10], stopHole: [3, 12], laserFootWidth: [40, 200], baseThickness: [3, 10],
   slideWidth: [20, 120], slideHeight: [20, 120], slideThickness: [0.5, 5], slideRim: [2, 15], slitBaseDepth: [30, 150],
   paperSlot: [1, 6], paperSlotDepth: [8, 40], screenBaseDepth: [40, 150],
@@ -43,6 +43,8 @@ export const LABELS = {
   slideWidth: '狹縫片寬', slideHeight: '狹縫片高', slideThickness: '狹縫片厚', slideRim: '窗口邊寬', slitBaseDepth: '狹縫座底座深度',
   paperSlot: '插槽寬', paperSlotDepth: '插槽深度', screenBaseDepth: '屏幕架底座深度',
 };
+export const V_FLOOR = 5;   // V 槽底至少高出底座頂面的實心厚度（v1.2.0 由 2 提高到 5；筆徑 ≤18 時不會觸發）
+export function minAxisHeight(p) { return Math.ceil(p.baseThickness + V_FLOOR + p.penDiameter / 2 / Math.sin(p.vAngle * Math.PI / 360)); }
 export const STOP_GAP = 8;   // 前托架前緣到前擋塊（筆頭）的距離
 export const REAR_EXPOSE = 20; // 筆尾至少露出底座後方的長度
 
@@ -60,11 +62,11 @@ export function sanitize(input = {}) {
     p[k] = v;
   }
   if (p.paperOrientation !== 'landscape' && p.paperOrientation !== 'portrait') p.paperOrientation = DEFAULTS.paperOrientation;
-  // V 槽底（尖點）要高於底座
+  // V 槽底（尖點）要高出底座頂面至少 V_FLOOR，槽底下方才有足夠實心料；筆徑變大時光軸下限跟著提高
   const vDepth = p.penDiameter / 2 / Math.sin(p.vAngle * Math.PI / 360);
-  if (p.axisHeight - vDepth < p.baseThickness + 2) {
-    const h = Math.ceil(p.baseThickness + 2 + vDepth);
-    warnings.push(`光軸高度太低，V 槽底會碰到底座，已提高到 ${h} mm`); p.axisHeight = h;
+  if (p.axisHeight - vDepth < p.baseThickness + V_FLOOR) {
+    const h = Math.ceil(p.baseThickness + V_FLOOR + vDepth);
+    warnings.push(`光軸高度太低，V 槽底離底座不到 ${V_FLOOR} mm，已提高到 ${h} mm`); p.axisHeight = h;
   }
   // 擋孔要比筆徑小，筆頭才頂得住
   if (p.stopHole > p.penDiameter - 2) { const h = p.penDiameter - 2; warnings.push(`擋塊通光孔要比筆徑小至少 2 mm，筆頭才頂得住，已改為 ${h} mm`); p.stopHole = h; }
@@ -269,7 +271,7 @@ export function measure(parts, p) {
   // 筆頭頂住的擋塊後表面位置；底座後緣（筆尾露出量）
   const stopFace = -500 + rayHits(L, [-500, 0, penAxis + (r + p.stopHole / 2) / 2], [1, 0, 0])[0];
   const baseRear = -500 + rayHits(L, [-500, L0.width / 2 - 1, p.baseThickness / 2], [1, 0, 0])[0];
-  const laser = {front: vf, rear: vr, holeDiameter: 2 * holeR, stopFace, rearExposed: baseRear - (stopFace - p.penLength),
+  const laser = {front: vf, rear: vr, holeDiameter: 2 * holeR, stopContact: r - holeR, stopFace, rearExposed: baseRear - (stopFace - p.penLength),
     penClearOfBase: penAxis - r - p.baseThickness};
   // 狹縫：由上往下落進插槽，打到槽底；片子擱在槽底 → 片中心 = 槽底 + 片高/2
   const slotBottom = top - rayHits(S, [0, eps, top], [0, 0, -1])[0];
