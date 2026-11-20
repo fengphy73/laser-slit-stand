@@ -1,17 +1,18 @@
 // 雷射光架設計器：幾何核心（瀏覽器與 Node 共用）
 // 座標：X = 光行進方向，Y = 左右，Z = 向上；單位 mm。
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 
 export const DEFAULTS = {
   axisHeight: 60,      // 光軸離桌面高度
   fit: 0.35,           // 共用配合間隙
   // 雷射夾座
   penDiameter: 14,
-  penLength: 140,      // 僅供預覽
-  clampLength: 40,     // C 形卡扣沿筆方向的長度（夾筆的前段）
-  clipWall: 2.5,       // 卡扣壁厚
-  clipOpening: 0.86,   // 卡口開口寬 ÷ 筆徑
-  laserFootLength: 100,
+  penLength: 140,      // 用來確認筆尾露出底座後方
+  vAngle: 90,          // V 槽夾角（度）
+  cradleSpacing: 70,   // 前後托架中心距
+  cradleThickness: 8,  // 托架沿筆方向的厚度
+  stopThickness: 4,    // 前擋塊厚度
+  stopHole: 7,         // 前擋塊通光孔直徑
   laserFootWidth: 60,
   baseThickness: 5,
   // 狹縫片夾座
@@ -29,11 +30,21 @@ export const DEFAULTS = {
 
 export const LIMITS = {
   axisHeight: [35, 120], fit: [0.1, 0.8],
-  penDiameter: [10, 18], penLength: [60, 250], clampLength: [20, 80], clipWall: [1.6, 5], clipOpening: [0.7, 0.95],
-  laserFootLength: [40, 240], laserFootWidth: [40, 200], baseThickness: [3, 10],
+  penDiameter: [10, 18], penLength: [60, 250], vAngle: [60, 120], cradleSpacing: [20, 200], cradleThickness: [4, 20],
+  stopThickness: [2, 10], stopHole: [3, 12], laserFootWidth: [40, 200], baseThickness: [3, 10],
   slideWidth: [20, 120], slideHeight: [20, 120], slideThickness: [0.5, 5], slideRim: [2, 15], slitBaseDepth: [30, 150],
   paperSlot: [1, 6], paperSlotDepth: [8, 40], screenBaseDepth: [40, 150],
 };
+
+export const LABELS = {
+  axisHeight: '光軸離桌面高度', fit: '配合間隙', baseThickness: '底座厚度',
+  penDiameter: '雷射筆直徑', penLength: '雷射筆全長', vAngle: 'V 槽夾角', cradleSpacing: '前後托架中心距', cradleThickness: '托架厚度',
+  stopThickness: '前擋塊厚度', stopHole: '擋塊通光孔直徑', laserFootWidth: '雷射座底座寬度',
+  slideWidth: '狹縫片寬', slideHeight: '狹縫片高', slideThickness: '狹縫片厚', slideRim: '窗口邊寬', slitBaseDepth: '狹縫座底座深度',
+  paperSlot: '插槽寬', paperSlotDepth: '插槽深度', screenBaseDepth: '屏幕架底座深度',
+};
+export const STOP_GAP = 8;   // 前托架前緣到前擋塊（筆頭）的距離
+export const REAR_EXPOSE = 20; // 筆尾至少露出底座後方的長度
 
 export const A4 = {w: 210, h: 297};
 export const BED = 250;
@@ -44,16 +55,29 @@ export function sanitize(input = {}) {
   const warnings = [];
   for (const [k, [lo, hi]] of Object.entries(LIMITS)) {
     let v = Number(p[k]);
-    if (!Number.isFinite(v)) { v = DEFAULTS[k]; warnings.push(`${k} 不是數字，已改回預設值 ${v}`); }
-    if (v < lo || v > hi) { const c = Math.min(hi, Math.max(lo, v)); warnings.push(`${k} 超出範圍 ${lo}–${hi}，已改為 ${c}`); v = c; }
+    if (!Number.isFinite(v)) { v = DEFAULTS[k]; warnings.push(`${LABELS[k]} 不是數字，已改回預設值 ${v}`); }
+    if (v < lo || v > hi) { const c = Math.min(hi, Math.max(lo, v)); warnings.push(`${LABELS[k]} 超出範圍 ${lo}–${hi}，已改為 ${c}`); v = c; }
     p[k] = v;
   }
   if (p.paperOrientation !== 'landscape') p.paperOrientation = 'portrait';
-  // 雷射卡扣底部要高於底座
-  const R = p.penDiameter / 2 + p.fit + p.clipWall;
-  if (p.axisHeight + p.fit - R < p.baseThickness + 2) {
-    const h = Math.ceil(p.baseThickness + 2 + R);
-    warnings.push(`光軸高度太低，雷射卡扣會碰到底座，已提高到 ${h} mm`); p.axisHeight = h;
+  // V 槽底（尖點）要高於底座
+  const vDepth = p.penDiameter / 2 / Math.sin(p.vAngle * Math.PI / 360);
+  if (p.axisHeight - vDepth < p.baseThickness + 2) {
+    const h = Math.ceil(p.baseThickness + 2 + vDepth);
+    warnings.push(`光軸高度太低，V 槽底會碰到底座，已提高到 ${h} mm`); p.axisHeight = h;
+  }
+  // 擋孔要比筆徑小，筆頭才頂得住
+  if (p.stopHole > p.penDiameter - 2) { const h = p.penDiameter - 2; warnings.push(`擋塊通光孔要比筆徑小至少 2 mm，筆頭才頂得住，已改為 ${h} mm`); p.stopHole = h; }
+  // 托架不可重疊，且筆尾要露出底座後方
+  if (p.penLength - STOP_GAP - REAR_EXPOSE - 2 * p.cradleThickness - 5 < 0) {
+    const t = Math.max(4, Math.floor((p.penLength - STOP_GAP - REAR_EXPOSE - 5) / 2));
+    warnings.push(`雷射筆太短，托架厚度已改為 ${t} mm，前後托架才放得下`); p.cradleThickness = t;
+  }
+  if (p.cradleSpacing < p.cradleThickness + 5) { const c = p.cradleThickness + 5; warnings.push(`前後托架太近會重疊，中心距已改為 ${c} mm`); p.cradleSpacing = c; }
+  const maxSpacing = p.penLength - STOP_GAP - p.cradleThickness - REAR_EXPOSE;
+  if (p.cradleSpacing > maxSpacing) {
+    const c = Math.max(p.cradleThickness + 5, Math.floor(maxSpacing));
+    warnings.push(`筆尾要露出底座後方至少 ${REAR_EXPOSE} mm 才按得到，托架中心距已改為 ${c} mm`); p.cradleSpacing = c;
   }
   // 狹縫片底緣要高於底座
   if (p.axisHeight - p.slideHeight / 2 < p.baseThickness + 2) {
@@ -64,7 +88,6 @@ export function sanitize(input = {}) {
     const r = Math.floor((Math.min(p.slideWidth, p.slideHeight) - 6) / 2);
     warnings.push(`窗口邊寬太大會擋住光，已改為 ${r} mm`); p.slideRim = r;
   }
-  if (p.laserFootLength < p.clampLength) { warnings.push('雷射底座長度不可短於夾持長度，已改成相同'); p.laserFootLength = p.clampLength; }
   return {params: p, warnings};
 }
 
@@ -73,20 +96,29 @@ const UVW_TO_YZX = mat4([0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0]);
 // 3x4 欄主序 → Manifold 需要的 4x4 欄主序
 function mat4(m) { return [m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, m[9], m[10], m[11], 1]; }
 
+// 雷射座 v1.1：前後兩個 V 形托架（筆用放的）＋前擋塊（筆頭頂住、中央通光孔）
+// 筆頭端面在 x = 0，筆身往 −X；筆尾按鍵露在底座後方。
+export function laserLayout(p) {
+  const a = p.vAngle * Math.PI / 360, r = p.penDiameter / 2, H = p.axisHeight;
+  const apex = H - r / Math.sin(a);                  // 筆擱在 V 槽時中心 = 光軸
+  const halfTop = (H - apex) * Math.tan(a);          // 托架頂（光軸高度）處 V 槽半寬
+  const width = Math.max(p.laserFootWidth, 2 * halfTop + 10);
+  const front = -STOP_GAP - p.cradleThickness / 2, rear = front - p.cradleSpacing;
+  const xMin = rear - p.cradleThickness / 2, xMax = p.stopThickness;
+  return {a, r, H, apex, halfTop, width, front, rear, xMin, xMax, stopTop: H + r + 4, cw: 2 * halfTop + 10};
+}
+
 export function laserHolder(M, p) {
-  const {CrossSection, Manifold} = M;
-  // 筆擱在孔底：孔心比光軸高一個間隙，筆的中心線剛好落在光軸高度
-  const r = p.penDiameter / 2 + p.fit, R = r + p.clipWall, H = p.axisHeight + p.fit;
-  const fw = Math.max(p.laserFootWidth, 2 * R + 10), ft = p.baseThickness;
-  const ow = Math.min(p.clipOpening * p.penDiameter, 2 * r - 0.4);
-  let prof = CrossSection.square([2 * R * 0.9, H], false).translate([-R * 0.9, 0])
-    .add(CrossSection.circle(R, SEG).translate([0, H]))
-    .add(CrossSection.square([fw, ft], false).translate([-fw / 2, 0]));
-  prof = prof.subtract(CrossSection.circle(r, SEG).translate([0, H]))
-    .subtract(CrossSection.square([ow, R + 2], false).translate([-ow / 2, H]));
-  const clamp = prof.extrude(p.clampLength).transform(UVW_TO_YZX);
-  const foot = Manifold.cube([p.laserFootLength, fw, ft], false).translate([p.clampLength - p.laserFootLength, -fw / 2, 0]);
-  return clamp.add(foot);
+  const {Manifold, CrossSection} = M;
+  const L = laserLayout(p), bt = p.baseThickness;
+  const base = Manifold.cube([L.xMax - L.xMin, L.width, bt], false).translate([L.xMin, -L.width / 2, 0]);
+  // V 托架剖面（YZ）：矩形減去 V 形
+  const vProf = CrossSection.square([L.cw, L.H], false).translate([-L.cw / 2, 0])
+    .subtract(new CrossSection([[[0, L.apex], [L.halfTop + 20 * Math.tan(L.a), L.H + 20], [-(L.halfTop + 20 * Math.tan(L.a)), L.H + 20]]]));
+  const cradle = x => vProf.extrude(p.cradleThickness).transform(UVW_TO_YZX).translate([x - p.cradleThickness / 2, 0, 0]);
+  const stop = Manifold.cube([p.stopThickness, L.cw, L.stopTop], false).translate([0, -L.cw / 2, 0])
+    .subtract(Manifold.cylinder(p.stopThickness + 2, p.stopHole / 2, p.stopHole / 2, SEG).rotate([0, 90, 0]).translate([-1, 0, L.H]));
+  return base.add(cradle(L.front)).add(cradle(L.rear)).add(stop);
 }
 
 export function slitHolder(M, p) {
@@ -121,9 +153,8 @@ export function screenHolder(M, p) {
   return base.add(block).subtract(slot).subtract(notch);
 }
 
-// 列印擺放：雷射夾座以前端面朝下立著印（卡扣層線與彎曲方向同平面，免支撐），其餘平放
+// 列印擺放：v1.1 起三件都底座朝下平放
 export function printTransform(name) {
-  if (name === 'laser') return [0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0]; // (x,y,z)->(z,y,-x)
   return [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
 }
 
@@ -219,10 +250,27 @@ function rayHits(mesh, o, d) {
 export function measure(parts, p) {
   const L = meshArrays(parts.laser.assembled), S = meshArrays(parts.slit.assembled), C = meshArrays(parts.screen.assembled);
   const top = 1000, eps = 0.013;
-  // 雷射：由上往下穿過卡口，打到孔底；筆擱在孔底 → 筆中心 = 孔底 + 筆徑/2
-  const boreBottom = top - rayHits(L, [p.clampLength / 2, eps, top], [0, 0, -1])[0];
-  const penAxis = boreBottom + p.penDiameter / 2;
+  // 雷射：在托架中央，由上往下打到 V 槽底，再用兩條水平射線量 V 槽斜面 → 夾角與尖點，
+  // 半徑 r 的筆擱在 V 槽時中心 = 尖點 + r / sin(半角)
+  const L0 = laserLayout(p), r = p.penDiameter / 2;
+  const vAt = x => {
+    const za = top - rayHits(L, [x, eps, top], [0, 0, -1])[0];
+    const z1 = za + 0.5, z2 = za + Math.min(4, (L0.H - za) * 0.8);
+    const w1 = rayHits(L, [x, 0, z1], [0, 1, 0])[0], w2 = rayHits(L, [x, 0, z2], [0, 1, 0])[0];
+    const s = (w2 - w1) / (z2 - z1), half = Math.atan(s), apex = z1 - w1 / s;
+    return {angle: 2 * half * 180 / Math.PI, apex, center: apex + r / Math.sin(half)};
+  };
+  const vf = vAt(L0.front), vr = vAt(L0.rear);
+  const penAxis = (vf.center + vr.center) / 2;
   const laserBeamClear = rayHits(L, [-500, eps, penAxis], [1, 0, 0]).length === 0;
+  // 擋孔實測直徑（16 個方向的徑向射線取最小）
+  let holeR = Infinity;
+  for (let i = 0; i < 16; i++) { const t = (i + 0.5) / 16 * 2 * Math.PI; const h = rayHits(L, [p.stopThickness / 2, 0, penAxis], [0, Math.cos(t), Math.sin(t)])[0]; holeR = Math.min(holeR, h); }
+  // 筆頭頂住的擋塊後表面位置；底座後緣（筆尾露出量）
+  const stopFace = -500 + rayHits(L, [-500, 0, penAxis + (r + p.stopHole / 2) / 2], [1, 0, 0])[0];
+  const baseRear = -500 + rayHits(L, [-500, L0.width / 2 - 1, p.baseThickness / 2], [1, 0, 0])[0];
+  const laser = {front: vf, rear: vr, holeDiameter: 2 * holeR, stopFace, rearExposed: baseRear - (stopFace - p.penLength),
+    penClearOfBase: penAxis - r - p.baseThickness};
   // 狹縫：由上往下落進插槽，打到槽底；片子擱在槽底 → 片中心 = 槽底 + 片高/2
   const slotBottom = top - rayHits(S, [0, eps, top], [0, 0, -1])[0];
   const slideCenter = slotBottom + p.slideHeight / 2;
@@ -230,7 +278,7 @@ export function measure(parts, p) {
   // 屏幕：紙底擱在槽底，光點在紙上的高度
   const paperBottom = top - rayHits(C, [0, eps, top], [0, 0, -1])[0];
   const ph = paperSize(p).h;
-  return {penAxis, slideCenter, paperBottom, paperTop: paperBottom + ph, spotOnPaper: penAxis - paperBottom,
+  return {laser, penAxis, slideCenter, paperBottom, paperTop: paperBottom + ph, spotOnPaper: penAxis - paperBottom,
     laserBeamClear, slitBeamClear, screenCovers: penAxis > paperBottom && penAxis < paperBottom + ph,
     maxAxisError: Math.abs(penAxis - slideCenter)};
 }

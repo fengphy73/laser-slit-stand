@@ -5,9 +5,9 @@ import {VERSION, DEFAULTS, LIMITS, buildAll, measure, edgeCheck, meshArrays, bin
 
 const FIELDS = [
   ['共用', [['axisHeight', '光軸離桌面高度', 'mm', 1], ['fit', '配合間隙', 'mm', 0.05], ['baseThickness', '底座厚度', 'mm', 0.5]]],
-  ['① 雷射夾座（夾筆的前段，按鍵在後段外露）', [['penDiameter', '雷射筆直徑', 'mm', 0.5], ['penLength', '雷射筆全長（僅預覽）', 'mm', 1],
-    ['clampLength', '夾持長度', 'mm', 1], ['clipWall', '卡扣壁厚', 'mm', 0.1], ['clipOpening', '卡口開口 ÷ 筆徑', '倍', 0.01],
-    ['laserFootLength', '底座長度（往筆尾延伸）', 'mm', 1], ['laserFootWidth', '底座寬度', 'mm', 1]]],
+  ['① 雷射夾座（前後 V 形托架＋前擋塊，筆用放的，筆尾按鍵外露）', [['penDiameter', '雷射筆直徑', 'mm', 0.5], ['penLength', '雷射筆全長', 'mm', 1],
+    ['vAngle', 'V 槽夾角', '度', 1], ['cradleSpacing', '前後托架中心距', 'mm', 1], ['cradleThickness', '托架厚度', 'mm', 0.5],
+    ['stopThickness', '前擋塊厚度', 'mm', 0.5], ['stopHole', '擋塊通光孔直徑', 'mm', 0.5], ['laserFootWidth', '底座寬度', 'mm', 1]]],
   ['② 狹縫片夾座', [['slideWidth', '狹縫片寬', 'mm', 0.5], ['slideHeight', '狹縫片高', 'mm', 0.5], ['slideThickness', '狹縫片厚', 'mm', 0.1],
     ['slideRim', '窗口邊寬', 'mm', 0.5], ['slitBaseDepth', '底座深度', 'mm', 1]]],
   ['③ 屏幕架（A4 紙）', [['paperOrientation', '紙張方向', '', 0], ['paperSlot', '插槽寬（紙＋墊板）', 'mm', 0.1], ['paperSlotDepth', '插槽深度', 'mm', 1], ['screenBaseDepth', '底座深度', 'mm', 1]]],
@@ -34,7 +34,7 @@ app.innerHTML = `
       <button data-dl="screen">下載 ③ 屏幕架 STL</button>
       <button data-dl="all" class="primary">一鍵下載全部（ZIP）</button>
     </div>
-    <p class="note">STL 已是建議列印擺放：雷射夾座以前端面朝下「立著印」（卡扣不需支撐、彈性方向較不易斷），狹縫片夾座與屏幕架平放。A4 紙很軟，建議在紙後墊一片墊板或厚紙板再插入屏幕架。</p>
+    <p class="note">STL 已是建議列印擺放：三件都底座朝下平放，免支撐（雷射座擋塊的通光孔是小圓孔，可直接橋接）。雷射筆直接放在兩個 V 形托架上，筆頭頂住前擋塊，從筆尾按鍵。A4 紙很軟，建議在紙後墊一片墊板或厚紙板再插入屏幕架。</p>
   </section>
 </main>`;
 
@@ -100,16 +100,17 @@ function rebuild() {
   const p = result.params, parts = result.parts, meas = measure(parts, p);
   group.clear();
   const mode = document.querySelector('input[name=mode]:checked').value;
-  const slitX = p.clampLength + 160, screenX = slitX + 320;
+  const slitX = p.stopThickness + 160, screenX = slitX + 320;
   if (mode === 'assembled') {
     const l = solidMesh(parts.laser.assembled, COLORS.laser); group.add(l);
     const s = solidMesh(parts.slit.assembled, COLORS.slit); s.position.x = slitX; group.add(s);
     const c = solidMesh(parts.screen.assembled, COLORS.screen); c.position.x = screenX; group.add(c);
-    // 雷射筆（示意）：前端略伸出卡扣，按鍵在後段
-    const front = p.clampLength + 5, H = meas.penAxis;
+    // 雷射筆（示意）：筆頭頂住前擋塊（x = 0），按鍵在筆尾端面
+    const front = 0, H = meas.penAxis;
     const pen = new THREE.Mesh(new THREE.CylinderGeometry(p.penDiameter / 2, p.penDiameter / 2, p.penLength, 48), new THREE.MeshStandardMaterial({color: 0x44484d, metalness: 0.4, roughness: 0.4}));
     pen.rotation.z = Math.PI / 2; pen.position.set(front - p.penLength / 2, 0, H); group.add(pen);
-    const btn = box(8, 5, 3, 0xd22c2c); btn.position.set(front - p.penLength + 30, 0, H + p.penDiameter / 2 + 1); group.add(btn);
+    const btn = new THREE.Mesh(new THREE.CylinderGeometry(p.penDiameter * 0.3, p.penDiameter * 0.3, 3, 32), new THREE.MeshStandardMaterial({color: 0xd22c2c}));
+    btn.rotation.z = Math.PI / 2; btn.position.set(front - p.penLength - 1.5, 0, H); group.add(btn);
     // 狹縫片（示意，半透明）與狹縫線
     const slide = box(p.slideThickness, p.slideWidth, p.slideHeight, 0x222222, {transparent: true, opacity: 0.35});
     slide.position.set(slitX, 0, meas.slideCenter); group.add(slide);
@@ -118,7 +119,7 @@ function rebuild() {
     const ps = paperSize(p);
     const paper = box(0.3, ps.w, ps.h, 0xffffff, {emissive: 0xffffff, emissiveIntensity: 0.55}); paper.position.set(screenX, 0, meas.paperBottom + ps.h / 2); group.add(paper);
     // 雷射光束與屏幕上的干涉條紋示意
-    const beamL = screenX - front;
+    const beamL = screenX - front;  // 光束從筆頭穿過擋孔
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, beamL, 12), new THREE.MeshBasicMaterial({color: 0xff2020}));
     beam.rotation.z = Math.PI / 2; beam.position.set(front + beamL / 2, 0, H); group.add(beam);
     for (let i = -4; i <= 4; i++) { const d = box(0.6, 3, 6, 0xff3030, {emissive: 0xff0000, emissiveIntensity: 0.6, transparent: true, opacity: 1 - Math.abs(i) * 0.2});
@@ -150,7 +151,9 @@ function renderInfo(m) {
   const ok = Math.abs(m.penAxis - m.slideCenter) < 0.05 && m.screenCovers;
   $('#info').innerHTML = `<table><thead><tr><th>零件</th><th>列印尺寸 X×Y×Z（mm）</th><th>三角面</th><th>網格</th><th>25 cm 平台</th></tr></thead><tbody>${rows}</tbody></table>
   <p class="axis">${ok ? '✅' : '⚠️'} 光軸實測：雷射筆中心 <b>${m.penAxis.toFixed(2)} mm</b>、狹縫片中心 <b>${m.slideCenter.toFixed(2)} mm</b>、屏幕紙張範圍 ${m.paperBottom.toFixed(1)}–${m.paperTop.toFixed(1)} mm（光點離紙底 ${m.spotOnPaper.toFixed(1)} mm）。
-  狹縫片插槽寬 ${(p.slideThickness + p.fit).toFixed(2)} mm，雷射卡扣內徑 ${(p.penDiameter + 2 * p.fit).toFixed(2)} mm。</p>`;
+  狹縫片插槽寬 ${(p.slideThickness + p.fit).toFixed(2)} mm。</p>
+  <p class="axis">雷射座：V 槽實測夾角 ${m.laser.front.angle.toFixed(1)}°，前／後托架筆中心 ${m.laser.front.center.toFixed(2)}／${m.laser.rear.center.toFixed(2)} mm；
+  擋孔實測直徑 ${m.laser.holeDiameter.toFixed(2)} mm（${m.laserBeamClear ? '光路暢通' : '⚠️ 光路被擋'}）；筆尾露出底座後方 ${m.laser.rearExposed.toFixed(1)} mm。</p>`;
 }
 
 function fit() {
@@ -176,5 +179,5 @@ document.querySelectorAll('[data-dl]').forEach(b => b.onclick = () => {
 });
 
 $('#info').textContent = '正在載入幾何引擎…';
-Module({locateFile: f => new URL(f, document.baseURI).href}).then(lib => { lib.setup(); M = lib; rebuild(); window.__ready = true; })
+Module({locateFile: f => new URL(f, document.baseURI).href}).then(lib => { lib.setup(); M = lib; rebuild(); window.__ready = true; window.__lss = {camera, controls, THREE}; })
   .catch(e => { $('#info').textContent = '幾何引擎載入失敗：' + e.message; });
