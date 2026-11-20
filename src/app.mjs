@@ -58,6 +58,7 @@ for (const [title, list] of FIELDS) {
 const reset = document.createElement('button'); reset.textContent = '全部恢復預設值'; form.appendChild(reset);
 reset.onclick = () => { Object.assign(state, DEFAULTS); syncForm(); schedule(); };
 function syncForm() { for (const el of form.querySelectorAll('[data-k]')) el.value = state[el.dataset.k]; }
+syncForm(); // 下拉選單初始值也跟預設值一致（紙張方向預設橫放）
 form.addEventListener('input', e => {
   const k = e.target.dataset.k; if (!k) return;
   if (k === 'paperOrientation') state[k] = e.target.value;
