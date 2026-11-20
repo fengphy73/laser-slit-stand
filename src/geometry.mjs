@@ -1,6 +1,6 @@
 // 雷射光架設計器：幾何核心（瀏覽器與 Node 共用）
 // 座標：X = 光行進方向，Y = 左右，Z = 向上；單位 mm。
-export const VERSION = '1.1.0';
+export const VERSION = '1.1.1';
 
 export const DEFAULTS = {
   axisHeight: 60,      // 光軸離桌面高度
@@ -22,7 +22,7 @@ export const DEFAULTS = {
   slideRim: 5,         // 窗口四周擋住片子的邊寬
   slitBaseDepth: 60,
   // 屏幕架
-  paperOrientation: 'portrait', // portrait 直放 / landscape 橫放
+  paperOrientation: 'landscape', // landscape 橫放（預設）/ portrait 直放
   paperSlot: 2.5,      // 插槽寬（A4 紙＋墊板）
   paperSlotDepth: 20,
   screenBaseDepth: 80,
@@ -59,7 +59,7 @@ export function sanitize(input = {}) {
     if (v < lo || v > hi) { const c = Math.min(hi, Math.max(lo, v)); warnings.push(`${LABELS[k]} 超出範圍 ${lo}–${hi}，已改為 ${c}`); v = c; }
     p[k] = v;
   }
-  if (p.paperOrientation !== 'landscape') p.paperOrientation = 'portrait';
+  if (p.paperOrientation !== 'landscape' && p.paperOrientation !== 'portrait') p.paperOrientation = DEFAULTS.paperOrientation;
   // V 槽底（尖點）要高於底座
   const vDepth = p.penDiameter / 2 / Math.sin(p.vAngle * Math.PI / 360);
   if (p.axisHeight - vDepth < p.baseThickness + 2) {

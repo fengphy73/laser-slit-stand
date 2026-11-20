@@ -8,7 +8,10 @@ const cases = [['預設', {}], ['筆徑 10', {penDiameter: 10}], ['筆徑 14', {
   ['V 角 60°＋筆徑 18', {vAngle: 60, penDiameter: 18}], ['V 角 120°＋筆徑 10', {vAngle: 120, penDiameter: 10}],
   ['短筆 60＋托架 20 厚', {penLength: 60, cradleThickness: 20}], ['長筆 250＋中心距 200', {penLength: 250, cradleSpacing: 200, cradleThickness: 20, stopThickness: 10}],
   ['擋孔 12＋筆徑 18', {stopHole: 12, penDiameter: 18}]];
-for (const [label, o] of cases) {
+// v1.1.1 起預設改為橫放：未指定方向的案例改成明確指定，直放、橫放各跑一次（「預設」案例維持不指定，檢查預設值本身）
+const expanded = cases.flatMap(([label, o]) => (label === '預設' || 'paperOrientation' in o) ? [[label, o]]
+  : [[label + '（直放）', {...o, paperOrientation: 'portrait'}], [label + '（橫放）', {...o, paperOrientation: 'landscape'}]]);
+for (const [label, o] of expanded) {
   const r = buildAll(M, o), m = measure(r.parts, r.params);
   for (const [k, part] of Object.entries(r.parts)) {
     const e = edgeCheck(part.print), stl = binarySTL(part.print);

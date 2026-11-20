@@ -1,0 +1,280 @@
+[
+ {
+  "params": {
+   "paperOrientation": "portrait"
+  },
+  "laser": "b3d9e8b195a059f28be68a26490b6c92ce4a6f2c183e1fb62b638037c56b171a",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "penDiameter": 10,
+   "paperOrientation": "portrait"
+  },
+  "laser": "abc5f84e9c4c666f3215f55cd8def279a3c16402b8517c0b20773dd5536056ec",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "penDiameter": 18,
+   "paperOrientation": "portrait"
+  },
+  "laser": "0bce038e43d9f6db37fd508f0ef1be8c3e3c933b76fe660756eb7662e605bb67",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "axisHeight": 35,
+   "paperOrientation": "portrait"
+  },
+  "laser": "406bfada5efce3e646364e87ec498a940a2acf504b5aea234475d331f3e0bcc3",
+  "slit": "5a4d03ad2b372f7c75ace6edd186a0a4f035b7744b24106e20f0a05e4b24c1af",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "axisHeight": 120,
+   "slideHeight": 120,
+   "paperOrientation": "portrait"
+  },
+  "laser": "0547645d4f1d2efaf37bbeee1af956cf6f6257f6b56d30850b5bf78671f84917",
+  "slit": "4c483f28c1ebaab8908196b2e35e76135316cae4c7da4d3610677b95760f2290",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "vAngle": 60,
+   "penDiameter": 18,
+   "paperOrientation": "portrait"
+  },
+  "laser": "72c124c95d1676118e893fe926f0d2c598d433f13f3ca117063bc9d274a197de",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "vAngle": 120,
+   "penDiameter": 10,
+   "paperOrientation": "portrait"
+  },
+  "laser": "2886a8347b7bad8a9b727ef92ee96fbbd476aa47c67265fa99c5bd01c74e18e4",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "penLength": 60,
+   "cradleThickness": 20,
+   "paperOrientation": "portrait"
+  },
+  "laser": "f86f3868c8f08e0908bd38371b5b4591753359f3d64f2b34de15277dc0ce1721",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "penLength": 250,
+   "cradleSpacing": 200,
+   "cradleThickness": 20,
+   "stopThickness": 10,
+   "paperOrientation": "portrait"
+  },
+  "laser": "7c0c9a6ec1e7df5301579038d268d83d156876546aed4553310451236b208672",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "stopHole": 12,
+   "penDiameter": 18,
+   "paperOrientation": "portrait"
+  },
+  "laser": "f77a677e6dd1d65f03fe87caaac8e604fb3fa04a12ab4e8e458bbbfcaac30a06",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "31a5e41f30175ec3dd61e723678016894fd79a18caf8efea7457c563b1cc18a9"
+ },
+ {
+  "params": {
+   "fit": 0.1,
+   "baseThickness": 3,
+   "paperOrientation": "portrait"
+  },
+  "laser": "34670d574cc5e3b88020b6c4e91988a5b4e851d75aff58243f1877439c3c42d8",
+  "slit": "de0a8ac81412a6977bc474261c5fc83fe7384dfb22b47a917a0db4ca526be2c0",
+  "screen": "7ece383d5577d5026b0c30b5cf44415ff5d85831441d1abc823ca646cc480b06"
+ },
+ {
+  "params": {
+   "fit": 0.8,
+   "baseThickness": 10,
+   "paperOrientation": "portrait"
+  },
+  "laser": "ae4206e4b4638a85c2dfb9915d05ef3d5347628f8c6c33dcbb4b8e90d6eb4674",
+  "slit": "9dfb819a5278920eda907e2b8bd434804e81c38299324b9147f2c9115fef9e27",
+  "screen": "238599a176fc797edce328fd1854d4c4ba0bdbbc7f47b551178cac390875c96c"
+ },
+ {
+  "params": {
+   "paperSlot": 1,
+   "paperSlotDepth": 8,
+   "screenBaseDepth": 40,
+   "paperOrientation": "portrait"
+  },
+  "laser": "b3d9e8b195a059f28be68a26490b6c92ce4a6f2c183e1fb62b638037c56b171a",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "e1010825b504434324bbc050e18be2649bab10e7e608023ee65c997fd807cd71"
+ },
+ {
+  "params": {
+   "paperSlot": 6,
+   "paperSlotDepth": 40,
+   "screenBaseDepth": 150,
+   "paperOrientation": "portrait"
+  },
+  "laser": "b3d9e8b195a059f28be68a26490b6c92ce4a6f2c183e1fb62b638037c56b171a",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "be65e9cf993b112ecd0278508838ab2ba0d489d9da7312511d5d106cf6b87f6d"
+ },
+ {
+  "params": {
+   "paperOrientation": "landscape"
+  },
+  "laser": "b3d9e8b195a059f28be68a26490b6c92ce4a6f2c183e1fb62b638037c56b171a",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "penDiameter": 10,
+   "paperOrientation": "landscape"
+  },
+  "laser": "abc5f84e9c4c666f3215f55cd8def279a3c16402b8517c0b20773dd5536056ec",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "penDiameter": 18,
+   "paperOrientation": "landscape"
+  },
+  "laser": "0bce038e43d9f6db37fd508f0ef1be8c3e3c933b76fe660756eb7662e605bb67",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "axisHeight": 35,
+   "paperOrientation": "landscape"
+  },
+  "laser": "406bfada5efce3e646364e87ec498a940a2acf504b5aea234475d331f3e0bcc3",
+  "slit": "5a4d03ad2b372f7c75ace6edd186a0a4f035b7744b24106e20f0a05e4b24c1af",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "axisHeight": 120,
+   "slideHeight": 120,
+   "paperOrientation": "landscape"
+  },
+  "laser": "0547645d4f1d2efaf37bbeee1af956cf6f6257f6b56d30850b5bf78671f84917",
+  "slit": "4c483f28c1ebaab8908196b2e35e76135316cae4c7da4d3610677b95760f2290",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "vAngle": 60,
+   "penDiameter": 18,
+   "paperOrientation": "landscape"
+  },
+  "laser": "72c124c95d1676118e893fe926f0d2c598d433f13f3ca117063bc9d274a197de",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "vAngle": 120,
+   "penDiameter": 10,
+   "paperOrientation": "landscape"
+  },
+  "laser": "2886a8347b7bad8a9b727ef92ee96fbbd476aa47c67265fa99c5bd01c74e18e4",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "penLength": 60,
+   "cradleThickness": 20,
+   "paperOrientation": "landscape"
+  },
+  "laser": "f86f3868c8f08e0908bd38371b5b4591753359f3d64f2b34de15277dc0ce1721",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "penLength": 250,
+   "cradleSpacing": 200,
+   "cradleThickness": 20,
+   "stopThickness": 10,
+   "paperOrientation": "landscape"
+  },
+  "laser": "7c0c9a6ec1e7df5301579038d268d83d156876546aed4553310451236b208672",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "stopHole": 12,
+   "penDiameter": 18,
+   "paperOrientation": "landscape"
+  },
+  "laser": "f77a677e6dd1d65f03fe87caaac8e604fb3fa04a12ab4e8e458bbbfcaac30a06",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "caef7608f483dc51d28b112011d4ca3ec5d779410568587c28f173564f227215"
+ },
+ {
+  "params": {
+   "fit": 0.1,
+   "baseThickness": 3,
+   "paperOrientation": "landscape"
+  },
+  "laser": "34670d574cc5e3b88020b6c4e91988a5b4e851d75aff58243f1877439c3c42d8",
+  "slit": "de0a8ac81412a6977bc474261c5fc83fe7384dfb22b47a917a0db4ca526be2c0",
+  "screen": "c346a6a46877c363dcb1dc85347e3b33c6eba98f5af053304b09afc4d31cdcf4"
+ },
+ {
+  "params": {
+   "fit": 0.8,
+   "baseThickness": 10,
+   "paperOrientation": "landscape"
+  },
+  "laser": "ae4206e4b4638a85c2dfb9915d05ef3d5347628f8c6c33dcbb4b8e90d6eb4674",
+  "slit": "9dfb819a5278920eda907e2b8bd434804e81c38299324b9147f2c9115fef9e27",
+  "screen": "28011f28d81b341ba296b2489bc945df6bd7107906657ebf7f125c2aeace8f30"
+ },
+ {
+  "params": {
+   "paperSlot": 1,
+   "paperSlotDepth": 8,
+   "screenBaseDepth": 40,
+   "paperOrientation": "landscape"
+  },
+  "laser": "b3d9e8b195a059f28be68a26490b6c92ce4a6f2c183e1fb62b638037c56b171a",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "30f77379573b3ec671fa17e2330f6073b9be0f3ed277ffa6f8242ed24b9fea15"
+ },
+ {
+  "params": {
+   "paperSlot": 6,
+   "paperSlotDepth": 40,
+   "screenBaseDepth": 150,
+   "paperOrientation": "landscape"
+  },
+  "laser": "b3d9e8b195a059f28be68a26490b6c92ce4a6f2c183e1fb62b638037c56b171a",
+  "slit": "735c7fba551bce3d6c467eae5c2f1836d45d6bacc85239365425280dbc46f701",
+  "screen": "797fd8be657147483559a3b548ac0bd2fe1e50f925c8ec870b2e41c38efda69b"
+ }
+]
