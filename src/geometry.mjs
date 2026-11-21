@@ -3,7 +3,7 @@
 export const VERSION = '1.3.0';
 
 export const DEFAULTS = {
-  axisHeight: 60,      // 光軸離桌面高度
+  axisHeight: 35,      // 光軸離桌面高度（v1.3.0：由 60 降到下限 35，三件一起變矮）
   fit: 0.35,           // 共用配合間隙
   // 雷射夾座
   penDiameter: 21,     // v1.2.0：執行長實測筆徑 21 mm
@@ -21,9 +21,10 @@ export const DEFAULTS = {
   slideThickness: 2,
   slideRim: 5,         // 窗口四周擋住片子的邊寬
   slitBaseDepth: 60,
+  slitZOffset: 0,      // v1.3.0：狹縫座高度微調（只移動狹縫片中心，相對光軸；+ 往上）
   // 屏幕架
   paperOrientation: 'landscape', // landscape 橫放（預設）/ portrait 直放
-  paperSlot: 2.5,      // 插槽寬（A4 紙＋墊板）
+  paperSlot: 3.4,      // 插槽寬（v1.3.0：3 mm 塑膠瓦楞板＋0.4 間隙）
   paperSlotDepth: 20,
   screenBaseDepth: 80,
 };
@@ -32,7 +33,7 @@ export const LIMITS = {
   axisHeight: [35, 120], fit: [0.1, 0.8],
   penDiameter: [10, 30], penLength: [60, 250], vAngle: [60, 120], cradleSpacing: [20, 200], cradleThickness: [4, 20],
   stopThickness: [2, 10], stopLip: [1.5, 12], laserFootWidth: [40, 200], baseThickness: [3, 10],
-  slideWidth: [20, 120], slideHeight: [20, 120], slideThickness: [0.5, 5], slideRim: [2, 15], slitBaseDepth: [30, 150],
+  slideWidth: [20, 120], slideHeight: [20, 120], slideThickness: [0.5, 5], slideRim: [2, 15], slitBaseDepth: [30, 150], slitZOffset: [-5, 5],
   paperSlot: [1, 6], paperSlotDepth: [8, 40], screenBaseDepth: [40, 150],
 };
 
@@ -40,8 +41,8 @@ export const LABELS = {
   axisHeight: '光軸離桌面高度', fit: '配合間隙', baseThickness: '底座厚度',
   penDiameter: '雷射筆直徑', penLength: '雷射筆全長', vAngle: 'V 槽夾角', cradleSpacing: '前後托架中心距', cradleThickness: '托架厚度',
   stopThickness: '前擋塊厚度', stopLip: '擋住筆頭下緣高度', laserFootWidth: '雷射座底座寬度',
-  slideWidth: '狹縫片寬', slideHeight: '狹縫片高', slideThickness: '狹縫片厚', slideRim: '窗口邊寬', slitBaseDepth: '狹縫座底座深度',
-  paperSlot: '插槽寬', paperSlotDepth: '插槽深度', screenBaseDepth: '屏幕架底座深度',
+  slideWidth: '狹縫片寬', slideHeight: '狹縫片高', slideThickness: '狹縫片厚', slideRim: '窗口邊寬', slitBaseDepth: '狹縫座底座深度', slitZOffset: '狹縫座高度微調',
+  paperSlot: '插槽寬（板厚＋間隙）', paperSlotDepth: '插槽深度', screenBaseDepth: '屏幕架底座深度',
 };
 export const V_FLOOR = 5;   // V 槽底至少高出底座頂面的實心厚度（v1.2.0 由 2 提高到 5；筆徑 ≤18 時不會觸發）
 export function minAxisHeight(p) { return Math.ceil(p.baseThickness + V_FLOOR + p.penDiameter / 2 / Math.sin(p.vAngle * Math.PI / 360)); }
@@ -95,6 +96,10 @@ export function sanitize(input = {}) {
     const r = Math.floor((Math.min(p.slideWidth, p.slideHeight) - 6) / 2);
     warnings.push(`窗口邊寬太大會擋住光，已改為 ${r} mm`); p.slideRim = r;
   }
+  // 狹縫座高度微調：片子底緣不能碰到底座（槽底至少高出底座頂 2 mm），光軸也要留在窗口內（窗口下緣低於光軸至少 1.5 mm）
+  const offLo = p.baseThickness + 2 + p.slideHeight / 2 - p.axisHeight, offHi = p.slideHeight / 2 - p.slideRim - 1.5;
+  if (p.slitZOffset < offLo) { const v = Math.ceil(offLo * 10) / 10; warnings.push(`狹縫座高度微調太低，狹縫片底緣會碰到底座，已改為 ${v} mm`); p.slitZOffset = v; }
+  if (p.slitZOffset > offHi) { const v = Math.floor(offHi * 10) / 10; warnings.push(`狹縫座高度微調太高，光會打在窗口下緣，已改為 ${v} mm`); p.slitZOffset = v; }
   return {params: p, warnings};
 }
 
@@ -123,13 +128,40 @@ export function chamferedPlate(M, x0, y0, sx, sy, bt, c) {
   return Manifold.hull([lower, top]);
 }
 
+// v1.3.0 省料：在底板挖穿一個長方形開口，開口上緣同樣 45° 倒角（倒角刀＝凸包）
+export function plateHole(M, x0, y0, sx, sy, bt, c) {
+  const {Manifold} = M;
+  const lower = Manifold.cube([sx, sy, bt - c + 1], false).translate([x0, y0, -1]);
+  const upper = Manifold.cube([sx + 2 * (c + 1), sy + 2 * (c + 1), 0.01], false).translate([x0 - c - 1, y0 - c - 1, bt + 1]);
+  return Manifold.hull([lower, upper]);
+}
+export const MIN_HOLE = 6;     // 省料開口最小邊長；不到就不開
+export const WIN_WALL = 3;     // 開窗保留的最小壁厚
+export const RAIL = 6;         // 雷射座框架兩側縱梁寬
+// 尖頂（Λ，45°）窗剖面（u 為左右、v 為高度）：底 v0、頂點 peak、半寬上限 hw。空間不夠回傳 null。
+// 兩側斜邊 45°，列印時窗頂不需支撐。
+export function peakWindow(M, hw, v0, peak) {
+  const w = Math.min(hw, peak - v0 - 1);
+  if (w < 2 || peak - v0 < 4) return null;
+  const sh = peak - w;
+  return new M.CrossSection([[[-w, v0], [w, v0], [w, sh], [0, peak], [-w, sh]]]);
+}
+export const SCREEN_STRIP = 20, SCREEN_FOOT = 30, SCREEN_CLIP = 40; // 屏幕架：中央長條寬、腳寬、插槽分段長
+
 export function laserHolder(M, p) {
   const {Manifold, CrossSection} = M;
   const L = laserLayout(p), bt = p.baseThickness;
-  const base = chamferedPlate(M, L.xMin, -L.width / 2, L.xMax - L.xMin, L.width, bt, chamferSize(p));
+  const c = chamferSize(p);
+  let base = chamferedPlate(M, L.xMin, -L.width / 2, L.xMax - L.xMin, L.width, bt, c);
+  // v1.3.0 省料：底座改框架。前托架到擋塊、後托架下方各留一條（托架前後各多 WIN_WALL），兩側各留 RAIL 縱梁，中間挖空。
+  const hx0 = L.rear + p.cradleThickness / 2 + WIN_WALL, hx1 = L.front - p.cradleThickness / 2 - WIN_WALL, hy = L.width / 2 - RAIL;
+  if (hx1 - hx0 >= MIN_HOLE && 2 * hy >= MIN_HOLE) base = base.subtract(plateHole(M, hx0, -hy, hx1 - hx0, 2 * hy, bt, c));
   // V 托架剖面（YZ）：矩形減去 V 形
-  const vProf = CrossSection.square([L.cw, L.H], false).translate([-L.cw / 2, 0])
+  let vProf = CrossSection.square([L.cw, L.H], false).translate([-L.cw / 2, 0])
     .subtract(new CrossSection([[[0, L.apex], [L.halfTop + 20 * Math.tan(L.a), L.H + 20], [-(L.halfTop + 20 * Math.tan(L.a)), L.H + 20]]]));
+  // v1.3.0 省料：V 槽下方開尖頂窗，頂點在 V 槽底下 WIN_WALL，兩側牆 WIN_WALL，窗底離底座頂 2 mm
+  const cw = peakWindow(M, L.cw / 2 - WIN_WALL, bt + 2, L.apex - WIN_WALL);
+  if (cw) vProf = vProf.subtract(cw);
   const cradle = x => vProf.extrude(p.cradleThickness).transform(UVW_TO_YZX).translate([x - p.cradleThickness / 2, 0, 0]);
   // 小擋塊：寬 STOP_WIDTH、置中，佔 x = 0..厚度；頂端 = 筆底緣 + stopLip
   const stop = Manifold.cube([p.stopThickness, STOP_WIDTH, L.stopTop], false).translate([0, -STOP_WIDTH / 2, 0]);
@@ -140,7 +172,7 @@ export function slitHolder(M, p) {
   const {Manifold} = M;
   const H = p.axisHeight, bt = p.baseThickness, g = p.fit;
   const skin = 3, side = 8;
-  const z0 = H - p.slideHeight / 2;                 // 片子底緣（擱在槽底）
+  const z0 = H + p.slitZOffset - p.slideHeight / 2;  // 片子底緣（擱在槽底）；v1.3.0 可用「狹縫座高度微調」上下移
   const top = z0 + p.slideHeight * 0.7;              // 牆頂：片子上緣露出方便拿取
   const slotT = p.slideThickness + g, T = slotT + 2 * skin;
   const Wy = p.slideWidth + 2 * g + 2 * side;
@@ -149,7 +181,11 @@ export function slitHolder(M, p) {
   const slot = Manifold.cube([slotT, p.slideWidth + 2 * g, top - z0 + 2], false).translate([-slotT / 2, -(p.slideWidth / 2 + g), z0]);
   const winW = p.slideWidth - 2 * p.slideRim;
   const win = Manifold.cube([T + 2, winW, top - z0 + 2], false).translate([-T / 2 - 1, -winW / 2, z0 + p.slideRim]);
-  return base.add(wall).subtract(slot).subtract(win);
+  let out = base.add(wall).subtract(slot).subtract(win);
+  // v1.3.0 省料：片子下方開尖頂窗（片子底下保留 WIN_WALL 實心），貫穿牆厚
+  const uw = peakWindow(M, p.slideWidth / 2 - WIN_WALL, bt + 2, z0 - WIN_WALL);
+  if (uw) out = out.subtract(uw.extrude(T + 2).transform(UVW_TO_YZX).translate([-T / 2 - 1, 0, 0]));
+  return out;
 }
 
 export function paperSize(p) {
@@ -161,8 +197,17 @@ export function screenHolder(M, p) {
   const bt = p.baseThickness, wall = 5;
   const L = Math.min(paperSize(p).w + 10, BED - 10);
   const sw = p.paperSlot, bx = sw + 2 * wall, top = bt + p.paperSlotDepth;
-  const base = chamferedPlate(M, -p.screenBaseDepth / 2, -L / 2, p.screenBaseDepth, L, bt, chamferSize(p));
-  const block = Manifold.cube([bx, L, top], false).translate([-bx / 2, -L / 2, 0]);
+  const c = chamferSize(p), D = p.screenBaseDepth;
+  let base = chamferedPlate(M, -D / 2, -L / 2, D, L, bt, c);
+  // v1.3.0 省料：底座改「中央長條＋左中右三隻腳」：挖掉長條前後、腳與腳之間的四塊
+  const sx = Math.max(SCREEN_STRIP, bx + 4) / 2, fw = SCREEN_FOOT;
+  const gapY = (L - 3 * fw) / 2, gapX = D / 2 - sx;
+  if (gapY >= MIN_HOLE && gapX >= MIN_HOLE)
+    for (const y0 of [-L / 2 + fw, fw / 2]) for (const x0 of [-D / 2 - c - 2, sx])
+      base = base.subtract(plateHole(M, x0, y0, gapX + c + 2, gapY, bt, c)); // 往外多切 c+2，外緣直接開口
+  // 插槽改成左、中、右三段（中段帶 V 形對準刻痕）
+  const clip = Math.min(SCREEN_CLIP, L / 3);
+  const block = Manifold.union([-L / 2, -clip / 2, L / 2 - clip].map(y => Manifold.cube([bx, clip, top], false).translate([-bx / 2, y, 0])));
   const slot = Manifold.cube([sw, L + 2, p.paperSlotDepth + 1], false).translate([-sw / 2, -L / 2 - 1, bt]);
   const notch = Manifold.cube([bx + 2, 3, 3], true).rotate([45, 0, 0]).translate([0, 0, top]); // 中心 V 形刻痕
   return base.add(block).subtract(slot).subtract(notch);
@@ -277,6 +322,11 @@ export function measure(parts, p) {
   };
   const vf = vAt(L0.front), vr = vAt(L0.rear);
   const penAxis = (vf.center + vr.center) / 2;
+  // v1.3.0：V 槽頂（光軸高度下 0.01）開口半寬，與筆的接觸點位置（r·cos 半角）。接觸點在開口內 → 筆靠在斜面上，不會架在邊角
+  const vHalfTop = rayHits(L, [L0.front, 0, L0.H - 0.01], [0, 1, 0])[0];
+  const vHalf = vf.angle * Math.PI / 360, contactY = r * Math.cos(vHalf);
+  const vSeat = {topWidth: 2 * vHalfTop, contactY, onFaces: contactY < vHalfTop - 0.5, maxPen: 2 * (vHalfTop - 0.5) / Math.cos(vHalf),
+    perMm: 0.5 / Math.sin(vHalf)}; // 實際筆徑每多 1 mm，筆中心升高 perMm
   const laserBeamClear = rayHits(L, [-500, eps, penAxis], [1, 0, 0]).length === 0;
   // v1.3.0：從筆頭前 1 mm（x = −1）沿光軸往前，雷射座上不得有任何東西
   const beamFromTipClear = rayHits(L, [-1, eps, penAxis], [1, 0, 0]).length === 0;
@@ -286,7 +336,7 @@ export function measure(parts, p) {
   // 筆頭頂住的擋塊後表面位置（在筆底緣與擋塊頂之間取一條射線）；底座後緣（筆尾露出量）
   const stopFace = -500 + rayHits(L, [-500, eps, (penBottom + stopTop) / 2], [1, 0, 0])[0];
   const baseRear = -500 + rayHits(L, [-500, L0.width / 2 - 1, p.baseThickness / 2], [1, 0, 0])[0];
-  const laser = {front: vf, rear: vr, stopTop, stopClearance: penAxis - stopTop, stopContact: stopTop - penBottom, beamFromTipClear, stopFace,
+  const laser = {front: vf, rear: vr, vSeat, stopTop, stopClearance: penAxis - stopTop, stopContact: stopTop - penBottom, beamFromTipClear, stopFace,
     rearExposed: baseRear - (stopFace - p.penLength), penClearOfBase: penAxis - r - p.baseThickness};
   // 狹縫：由上往下落進插槽，打到槽底；片子擱在槽底 → 片中心 = 槽底 + 片高/2
   const slotBottom = top - rayHits(S, [0, eps, top], [0, 0, -1])[0];
@@ -295,7 +345,7 @@ export function measure(parts, p) {
   // 屏幕：紙底擱在槽底，光點在紙上的高度
   const paperBottom = top - rayHits(C, [0, eps, top], [0, 0, -1])[0];
   const ph = paperSize(p).h;
-  return {laser, penAxis, slideCenter, paperBottom, paperTop: paperBottom + ph, spotOnPaper: penAxis - paperBottom,
+  return {laser, penAxis, slideCenter, slitOffset: slideCenter - penAxis, paperBottom, paperTop: paperBottom + ph, spotOnPaper: penAxis - paperBottom,
     laserBeamClear, slitBeamClear, screenCovers: penAxis > paperBottom && penAxis < paperBottom + ph,
     maxAxisError: Math.abs(penAxis - slideCenter)};
 }
