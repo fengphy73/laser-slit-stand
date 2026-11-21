@@ -5,12 +5,12 @@ import {VERSION, DEFAULTS, LIMITS, buildAll, measure, edgeCheck, meshArrays, bin
 
 const FIELDS = [
   ['共用', [['axisHeight', '光軸離桌面高度', 'mm', 1], ['fit', '配合間隙', 'mm', 0.05], ['baseThickness', '底座厚度', 'mm', 0.5]]],
-  ['① 雷射夾座（前後 V 形托架＋前擋塊，筆用放的，筆尾按鍵外露）', [['penDiameter', '雷射筆直徑', 'mm', 0.5], ['penLength', '雷射筆全長', 'mm', 1],
+  ['① 雷射夾座（前後 V 形托架＋前方小擋塊，筆用放的，筆尾按鍵外露）', [['penDiameter', '雷射筆直徑', 'mm', 0.5], ['penLength', '雷射筆全長', 'mm', 1],
     ['vAngle', 'V 槽夾角', '度', 1], ['cradleSpacing', '前後托架中心距', 'mm', 1], ['cradleThickness', '托架厚度', 'mm', 0.5],
-    ['stopThickness', '前擋塊厚度', 'mm', 0.5], ['stopHole', '擋塊通光孔直徑', 'mm', 0.5], ['laserFootWidth', '底座寬度', 'mm', 1]]],
+    ['stopThickness', '前擋塊厚度', 'mm', 0.5], ['stopLip', '擋住筆頭下緣高度', 'mm', 0.5], ['laserFootWidth', '底座寬度', 'mm', 1]]],
   ['② 狹縫片夾座', [['slideWidth', '狹縫片寬', 'mm', 0.5], ['slideHeight', '狹縫片高', 'mm', 0.5], ['slideThickness', '狹縫片厚', 'mm', 0.1],
-    ['slideRim', '窗口邊寬', 'mm', 0.5], ['slitBaseDepth', '底座深度', 'mm', 1]]],
-  ['③ 屏幕架（A4 紙）', [['paperOrientation', '紙張方向', '', 0], ['paperSlot', '插槽寬（紙＋墊板）', 'mm', 0.1], ['paperSlotDepth', '插槽深度', 'mm', 1], ['screenBaseDepth', '底座深度', 'mm', 1]]],
+    ['slideRim', '窗口邊寬', 'mm', 0.5], ['slitBaseDepth', '底座深度', 'mm', 1], ['slitZOffset', '狹縫座高度微調（＋往上）', 'mm', 0.1]]],
+  ['③ 屏幕架（3 mm 塑膠瓦楞板，A4 大小）', [['paperOrientation', '屏幕方向', '', 0], ['paperSlot', '插槽寬（板厚＋0.4 間隙）', 'mm', 0.1], ['paperSlotDepth', '插槽深度', 'mm', 1], ['screenBaseDepth', '底座深度', 'mm', 1]]],
 ];
 
 const $ = s => document.querySelector(s);
@@ -34,7 +34,7 @@ app.innerHTML = `
       <button data-dl="screen">下載 ③ 屏幕架 STL</button>
       <button data-dl="all" class="primary">一鍵下載全部（ZIP）</button>
     </div>
-    <p class="note">STL 已是建議列印擺放：三件都底座朝下平放，免支撐（雷射座擋塊的通光孔是小圓孔，可直接橋接）。雷射筆直接放在兩個 V 形托架上，筆頭頂住前擋塊，從筆尾按鍵。A4 紙很軟，建議在紙後墊一片墊板或厚紙板再插入屏幕架。</p>
+    <p class="note">STL 已是建議列印擺放：三件都底座朝下平放，免支撐；三件底座上緣都有 45° 倒角，底面保持平整貼床。雷射筆直接放在兩個 V 形托架上，筆頭下緣頂住前方小擋塊，出光處上方與中間完全空出，光直接射出；從筆尾按鍵。省料設計：雷射座底座是框架、V 托架與狹縫座下方開尖頂窗（45° 斜頂，免支撐），屏幕架是中央長條加三隻腳、插槽分左中右三段。屏幕建議直接用 3 mm 塑膠瓦楞板（裁成 A4 大小）插進插槽當屏幕，要記錄條紋可再用膠帶貼一張 A4 紙；單用 A4 紙太軟，三段插槽之間會下垂，一定要在紙後墊瓦楞板或厚紙板。</p>
   </section>
 </main>`;
 
@@ -50,6 +50,13 @@ for (const [title, list] of FIELDS) {
     } else {
       const [lo, hi] = LIMITS[key];
       row.innerHTML = `<span>${label}</span><input type="number" data-k="${key}" min="${lo}" max="${hi}" step="${step}" value="${state[key]}"><em>${unit}</em><small>${lo}–${hi}</small>`;
+    }
+    if (key === 'penDiameter') { // v1.3.0：筆徑放大醒目，V 槽依此尺寸產生
+      row.classList.add('key');
+      fs.appendChild(row);
+      const tip = document.createElement('p'); tip.className = 'keytip';
+      tip.textContent = '⚠️ 請先用游標卡尺量「放在托架上那一段」的實際筆徑再填；V 槽依筆徑產生，筆比設定粗時光軸會偏高（每粗 1 mm 約高 0.7 mm）。下載的檔名會標出筆徑與光軸，列印前請核對。';
+      fs.appendChild(tip); continue;
     }
     fs.appendChild(row);
   }
@@ -106,7 +113,7 @@ function rebuild() {
     const l = solidMesh(parts.laser.assembled, COLORS.laser); group.add(l);
     const s = solidMesh(parts.slit.assembled, COLORS.slit); s.position.x = slitX; group.add(s);
     const c = solidMesh(parts.screen.assembled, COLORS.screen); c.position.x = screenX; group.add(c);
-    // 雷射筆（示意）：筆頭頂住前擋塊（x = 0），按鍵在筆尾端面
+    // 雷射筆（示意）：筆頭下緣頂住前方小擋塊（x = 0），按鍵在筆尾端面
     const front = 0, H = meas.penAxis;
     const pen = new THREE.Mesh(new THREE.CylinderGeometry(p.penDiameter / 2, p.penDiameter / 2, p.penLength, 48), new THREE.MeshStandardMaterial({color: 0x44484d, metalness: 0.4, roughness: 0.4}));
     pen.rotation.z = Math.PI / 2; pen.position.set(front - p.penLength / 2, 0, H); group.add(pen);
@@ -120,7 +127,7 @@ function rebuild() {
     const ps = paperSize(p);
     const paper = box(0.3, ps.w, ps.h, 0xffffff, {emissive: 0xffffff, emissiveIntensity: 0.55}); paper.position.set(screenX, 0, meas.paperBottom + ps.h / 2); group.add(paper);
     // 雷射光束與屏幕上的干涉條紋示意
-    const beamL = screenX - front;  // 光束從筆頭穿過擋孔
+    const beamL = screenX - front;  // 光束從筆頭直接射出（擋塊在光軸下方）
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, beamL, 12), new THREE.MeshBasicMaterial({color: 0xff2020}));
     beam.rotation.z = Math.PI / 2; beam.position.set(front + beamL / 2, 0, H); group.add(beam);
     for (let i = -4; i <= 4; i++) { const d = box(0.6, 3, 6, 0xff3030, {emissive: 0xff0000, emissiveIntensity: 0.6, transparent: true, opacity: 1 - Math.abs(i) * 0.2});
@@ -149,12 +156,13 @@ function renderInfo(m) {
     return `<tr><td><i style="background:#${COLORS[k].toString(16).padStart(6, '0')}"></i>${v.name}</td><td>${v.size.map(x => x.toFixed(1)).join(' × ')}</td><td>${v.tris}</td>
       <td>${e.closed && v.status === 'NoError' ? '✅ 封閉' : '❌ 有破面'}</td><td>${v.fitsBed ? '✅' : '❌ 超出'}</td></tr>`;
   }).join('');
-  const ok = Math.abs(m.penAxis - m.slideCenter) < 0.05 && m.screenCovers;
+  const ok = Math.abs(m.slitOffset - p.slitZOffset) < 0.05 && m.screenCovers && m.laser.vSeat.onFaces;
   $('#info').innerHTML = `<table><thead><tr><th>零件</th><th>列印尺寸 X×Y×Z（mm）</th><th>三角面</th><th>網格</th><th>25 cm 平台</th></tr></thead><tbody>${rows}</tbody></table>
-  <p class="axis">${ok ? '✅' : '⚠️'} 光軸實測：雷射筆中心 <b>${m.penAxis.toFixed(2)} mm</b>、狹縫片中心 <b>${m.slideCenter.toFixed(2)} mm</b>、屏幕紙張範圍 ${m.paperBottom.toFixed(1)}–${m.paperTop.toFixed(1)} mm（光點離紙底 ${m.spotOnPaper.toFixed(1)} mm）。
+  <p class="axis">${ok ? '✅' : '⚠️'} 光軸實測：雷射筆中心 <b>${m.penAxis.toFixed(2)} mm</b>、狹縫片中心 <b>${m.slideCenter.toFixed(2)} mm</b>（${Math.abs(m.slitOffset) < 0.005 ? '與光軸同高' : `比光軸${m.slitOffset > 0 ? '高' : '低'} ${Math.abs(m.slitOffset).toFixed(2)} mm，依「狹縫座高度微調」`}）、屏幕（A4 大小瓦楞板）範圍 ${m.paperBottom.toFixed(1)}–${m.paperTop.toFixed(1)} mm（光點離板底 ${m.spotOnPaper.toFixed(1)} mm）。
   狹縫片插槽寬 ${(p.slideThickness + p.fit).toFixed(2)} mm。</p>
   <p class="axis">雷射座：V 槽實測夾角 ${m.laser.front.angle.toFixed(1)}°，前／後托架筆中心 ${m.laser.front.center.toFixed(2)}／${m.laser.rear.center.toFixed(2)} mm；
-  擋孔實測直徑 ${m.laser.holeDiameter.toFixed(2)} mm（${m.laserBeamClear ? '光路暢通' : '⚠️ 光路被擋'}）；筆尾露出底座後方 ${m.laser.rearExposed.toFixed(1)} mm。</p>`;
+  V 槽頂開口 ${m.laser.vSeat.topWidth.toFixed(1)} mm，筆接觸點在 ±${m.laser.vSeat.contactY.toFixed(2)} mm（${m.laser.vSeat.onFaces ? '靠在斜面上' : '⚠️ 筆會架在 V 槽邊角上，光軸會偏高'}）；實際筆徑每粗 1 mm，光軸升高 ${m.laser.vSeat.perMm.toFixed(2)} mm，請以實測筆徑重新產生。
+  小擋塊頂高 ${m.laser.stopTop.toFixed(2)} mm，低於光軸 ${m.laser.stopClearance.toFixed(2)} mm，擋住筆頭下緣 ${m.laser.stopContact.toFixed(2)} mm（${m.laser.beamFromTipClear && m.laserBeamClear ? '光路暢通' : '⚠️ 光路被擋'}）；筆尾露出底座後方 ${m.laser.rearExposed.toFixed(1)} mm。</p>`;
 }
 
 function fit() {

@@ -1,11 +1,11 @@
 {
   "name": "laser-slit-stand",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "雷射光架設計器：單狹縫／雙狹縫干涉繞射實驗的 3D 列印架子",
   "scripts": {
     "build": "node build.mjs",
     "build:pages": "node build.mjs --pages",
-    "test": "node tests/geometry.test.mjs && node tests/unchanged.test.mjs && node tests/unchanged-v110.test.mjs && node tests/unchanged-v111.test.mjs"
+    "test": "node tests/geometry.test.mjs && node tests/v120-diff.test.mjs"
   },
   "license": "ISC",
   "type": "module",
